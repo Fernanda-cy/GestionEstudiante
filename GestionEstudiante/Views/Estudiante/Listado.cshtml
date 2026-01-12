@@ -1,0 +1,337 @@
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor Accessor
+@model IEnumerable<GestionEstudiante.Models.Estudiante>
+
+@{
+    ViewData["Title"] = "Portal Académico";
+    var rol = Accessor.HttpContext?.Session.GetString("UsuarioRol");
+
+    // Cálculos para las tarjetas de estadísticas
+    var total = Model.Count();
+    var activos = Model.Count(x => x.Estado);
+    var inactivos = Model.Count(x => !x.Estado);
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<div class="app-container">
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="icon-box bg-primary-soft text-primary">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted text-uppercase mb-1">Total Estudiantes</h6>
+                    <h3 class="fw-bold mb-0 text-dark">@total</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="icon-box bg-success-soft text-success">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted text-uppercase mb-1">Matrícula Activa</h6>
+                    <h3 class="fw-bold mb-0 text-dark">@activos</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="icon-box bg-danger-soft text-danger">
+                    <i class="bi bi-pause-fill"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted text-uppercase mb-1">Suspendidos / Inactivos</h6>
+                    <h3 class="fw-bold mb-0 text-dark">@inactivos</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-card">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center p-4 border-bottom">
+            <div>
+                <h4 class="fw-bold mb-1">Directorio de Alumnos</h4>
+                <p class="text-muted small mb-0">Gestiona la base de datos de la institución.</p>
+            </div>
+
+            <div class="d-flex gap-2">
+                <form asp-action="Listado" method="get" class="search-form">
+                    <i class="bi bi-search text-muted"></i>
+                    <input type="text" name="Busqueda" class="form-control border-0 bg-transparent shadow-none"
+                           placeholder="Buscar..." value="@ViewData["FiltroActual"]">
+                </form>
+
+               
+
+                @if (rol == "Admin")
+                {
+                    <a asp-action="Crear" class="btn btn-primary fw-semibold px-4 d-flex align-items-center gap-2">
+                        <i class="bi bi-plus-lg"></i> <span>Registrar</span>
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4 text-uppercase text-xs text-muted font-weight-bolder opacity-7">Perfil</th>
+                        <th class="text-uppercase text-xs text-muted font-weight-bolder opacity-7">Información Personal</th>
+                        <th class="text-uppercase text-xs text-muted font-weight-bolder opacity-7">Estado</th>
+                        <th class="text-end pe-4 text-uppercase text-xs text-muted font-weight-bolder opacity-7">Gestión</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-gradient me-3 text-white">
+                                        @item.Nombres.Substring(0, 1)
+                                    </div>
+                                    <div class="d-flex flex-column">
+                                        <h6 class="mb-0 text-sm fw-bold text-dark">@item.Nombres @item.Apellidos</h6>
+                                        <span class="text-xs text-muted">ID: #@item.IdEstudiante</span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="text-sm fw-semibold text-dark mb-1">
+                                        <i class="bi bi-card-heading me-1 text-muted"></i> @item.DNI
+                                    </span>
+                                    <a href="mailto:@item.Correo" class="text-xs text-secondary text-decoration-none">
+                                        @item.Correo
+                                    </a>
+                                </div>
+                            </td>
+
+                            <td>
+                                @if (item.Estado)
+                                {
+                                    <span class="status-badge status-active">Activo</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-inactive">Inactivo</span>
+                                }
+                            </td>
+
+                            <td class="pe-4 text-end">
+                                @if (rol == "Admin")
+                                {
+                                    <a asp-action="Edit" asp-route-IdEstudiante="@item.IdEstudiante"
+                                       class="action-btn text-primary me-2" title="Editar">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </a>
+                                    <button onclick="confirmarEliminar(@item.IdEstudiante)"
+                                            class="action-btn text-danger" title="Eliminar">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="text-xs text-muted">Lectura</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <div class="mb-3 text-muted opacity-25">
+                        <i class="bi bi-inbox-fill" style="font-size: 3rem;"></i>
+                    </div>
+                    <h6 class="text-muted">No se encontraron registros</h6>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmarEliminar(id) {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "Se deshabilitará el acceso al estudiante.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#111827',
+            cancelButtonColor: '#d1d5db',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            customClass: { popup: 'rounded-4' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/Estudiante/DeleteConfirm';
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'IdEstudiante';
+                input.value = id;
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        })
+    }
+</script>
+
+<style>
+    /* --- ESTILOS MODERNOS (Enterprise UI) --- */
+    body {
+        background: linear-gradient(135deg, #f0f2f5 0%, #e2e8f0 100%);
+        background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+        background-size: 20px 20px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        color: #1e293b;
+        min-height: 100vh;
+    }
+
+    .app-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid #e2e8f0;
+        transition: transform 0.2s;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+    .main-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        overflow: hidden;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        backdrop-filter: blur(10px);
+    }
+
+    .icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .bg-primary-soft {
+        background-color: #eff6ff;
+        color: #3b82f6;
+    }
+
+    .bg-success-soft {
+        background-color: #f0fdf4;
+        color: #22c55e;
+    }
+
+    /* Estilo reutilizado para el botón de Salir */
+    .bg-danger-soft {
+        background-color: #fef2f2;
+        color: #ef4444;
+    }
+
+    .search-form {
+        display: flex;
+        align-items: center;
+        background: #f1f5f9;
+        padding: 0.4rem 1rem;
+        border-radius: 10px;
+        width: 250px;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+    }
+
+        .search-form:focus-within {
+            background: white;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+    .table thead th {
+        background-color: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        letter-spacing: 0.05em;
+    }
+
+    .table tbody td {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .avatar-gradient {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3);
+    }
+
+    .status-badge {
+        padding: 0.35em 0.8em;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .status-active {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .status-inactive {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background-color: #f8fafc;
+        transition: all 0.2s;
+        border: none;
+    }
+
+        .action-btn:hover {
+            background-color: #e2e8f0;
+            transform: scale(1.1);
+        }
+</style>

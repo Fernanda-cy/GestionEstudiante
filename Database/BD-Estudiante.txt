@@ -1,0 +1,106 @@
+CREATE DATABASE BD_Estudiante
+GO
+
+USE BD_Estudiante
+GO
+
+CREATE TABLE Estudiante (
+    IdEstudiante INT IDENTITY(1,1) PRIMARY KEY,
+    Nombres VARCHAR(100) NOT NULL,
+    Apellidos VARCHAR(100) NOT NULL,
+    DNI VARCHAR(8) NOT NULL,
+    Correo VARCHAR(100),
+    Estado BIT DEFAULT 1
+)
+go
+
+
+CREATE PROCEDURE SP_InsertarEstudiante
+    @Nombres VARCHAR(100),
+    @Apellidos VARCHAR(100),
+    @DNI VARCHAR(8),
+    @Correo VARCHAR(100)
+AS
+BEGIN
+    INSERT INTO Estudiante (Nombres, Apellidos, DNI, Correo)
+    VALUES (@Nombres, @Apellidos, @DNI, @Correo)
+END
+go
+
+
+CREATE OR ALTER PROCEDURE SP_ListarEstudiante
+    @Busqueda VARCHAR(50) = NULL -- Parámetro opcional
+AS
+BEGIN
+    SELECT * FROM Estudiante
+    WHERE Estado = 1 
+    AND (
+        @Busqueda IS NULL OR 
+        Nombres LIKE '%' + @Busqueda + '%' OR 
+        Apellidos LIKE '%' + @Busqueda + '%' OR 
+        DNI LIKE '%' + @Busqueda + '%'
+    )
+END
+go
+
+
+CREATE PROCEDURE SP_BuscarEstudiante
+    @IdEstudiante INT
+AS
+BEGIN
+    SELECT * FROM Estudiante
+    WHERE IdEstudiante = @IdEstudiante
+END
+go
+
+
+CREATE OR ALTER PROCEDURE SP_ActualizarEstudiante
+    @IdEstudiante INT,
+    @Nombres VARCHAR(100),
+    @Apellidos VARCHAR(100),
+    @DNI VARCHAR(8),
+    @Correo VARCHAR(100),
+	@Estado BIT
+AS
+BEGIN
+    UPDATE Estudiante
+    SET Nombres = @Nombres,
+        Apellidos = @Apellidos,
+        DNI = @DNI,
+        Correo = @Correo,
+		Estado = @Estado
+    WHERE IdEstudiante = @IdEstudiante;
+END
+GO
+
+
+CREATE  PROCEDURE SP_EliminarEstudiante
+    @IdEstudiante INT
+AS
+BEGIN
+    UPDATE Estudiante
+    SET Estado = 0
+    WHERE IdEstudiante = @IdEstudiante
+END
+go
+
+
+
+
+
+INSERT INTO Estudiante (Nombres, Apellidos, DNI, Correo, Estado)
+VALUES ('Ana', 'Pérez', '12345678', 'ana@gmail.com', 1);
+
+INSERT INTO Estudiante (Nombres, Apellidos, DNI, Correo, Estado)
+VALUES ('Juan', 'Lopez', '87654321', 'juan@gmail.com', 1);
+
+INSERT INTO Estudiante (Nombres, Apellidos, DNI, Correo, Estado)
+VALUES ('María', 'Torres', '11223344', 'maria@gmail.com', 1);
+
+INSERT INTO Estudiante (Nombres, Apellidos, DNI, Correo, Estado)
+VALUES ('Luis', 'Gomez', '44332211', 'luis@gmail.com', 1);
+
+INSERT INTO Estudiante (Nombres, Apellidos, DNI, Correo, Estado)
+VALUES ('Carlos', 'Ramos', '55667788', 'carlos@gmail.com', 1);
+
+
